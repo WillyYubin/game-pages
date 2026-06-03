@@ -20,6 +20,13 @@ const SUIT_SYMBOL = {
     D: "♦"
 };
 
+const SUIT_IMAGE_KEY = {
+    S: "c",
+    H: "d",
+    C: "b",
+    D: "a"
+};
+
 const RANK_LABEL = {
     13: "K",
     12: "Q",
@@ -279,22 +286,16 @@ function createCardEl(card, colIndex, cardIndex) {
     cardEl.dataset.index = String(cardIndex);
     cardEl.dataset.cardId = String(card.id);
 
-    const rankText = RANK_LABEL[card.rank];
-    const suitText = SUIT_SYMBOL[card.suit];
-
-    if (card.suit === "H" || card.suit === "D") {
-        cardEl.classList.add("red-suit");
-    }
-
-    cardEl.appendChild(createCornerEl(rankText, suitText, false));
-    cardEl.appendChild(createCornerEl(rankText, suitText, true));
-
-    if (card.rank >= 11) {
-        cardEl.classList.add("face-card");
-        cardEl.appendChild(createFaceArtSvg(card.rank, card.suit));
+    const art = document.createElement("img");
+    art.className = "card-art";
+    art.alt = card.faceUp ? getCardValueText(card) : "牌背";
+    if (card.faceUp) {
+        const suitKey = SUIT_IMAGE_KEY[card.suit] || "a";
+        art.src = `../images/spider-cards/${suitKey}-${card.rank}.png`;
     } else {
-        cardEl.appendChild(createPipsEl(card.rank, card.suit));
+        art.src = "../images/spider-cards/f-1.png";
     }
+    cardEl.appendChild(art);
 
     return cardEl;
 }
