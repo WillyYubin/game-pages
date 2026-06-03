@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <title>小熊跳一跳 Mobile</title>
+  <style>
+    :root {
+      --bg-top: #d9eefb;
+      --bg-bottom: #f6fafc;
+      --panel-bg: rgba(255, 255, 255, 0.82);
+      --text: #1f2a3a;
+      --accent: #2c8f58;
+      --danger: #d84747;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      touch-action: none;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+      color: var(--text);
+    }
+
+    #game {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .hud {
+      position: fixed;
+      left: 0;
+      top: env(safe-area-inset-top, 0);
+      width: 100%;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .badge {
+      background: var(--panel-bg);
+      backdrop-filter: blur(4px);
+      border-radius: 12px;
+      padding: 8px 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    #score {
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--accent);
+      min-width: 70px;
+      text-align: center;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 4;
+      background: rgba(17, 27, 40, 0.52);
+      padding: 16px;
+    }
+
+    .card {
+      width: min(360px, 100%);
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 20px 16px;
+      text-align: center;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .card h2 {
+      margin: 0 0 6px;
+      font-size: 24px;
+    }
+
+    .card p {
+      margin: 8px 0;
+      color: #334155;
+    }
+
+    .danger {
+      color: var(--danger);
+      font-weight: 700;
+      font-size: 28px;
+    }
+
+    button {
+      margin-top: 12px;
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-size: 15px;
+      cursor: pointer;
+      background: #1f8f58;
+      color: #fff;
+      box-shadow: 0 10px 16px rgba(31, 143, 88, 0.3);
+    }
+
+    .hint {
+      position: fixed;
+      bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+      width: 100%;
+      text-align: center;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .hint span {
+      display: inline-block;
+      background: var(--panel-bg);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 12px;
+      color: #475569;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <div class="hud">
+    <div class="badge">小熊跳一跳</div>
+    <div id="score" class="badge">0</div>
+    <div class="badge">长按后松开</div>
+  </div>
+
+  <div class="hint"><span>按住蓄力，松手起跳</span></div>
+
+  <div id="gameOver" class="overlay" role="dialog" aria-modal="true">
+    <div class="card">
+      <h2>游戏结束</h2>
+      <p>本局得分</p>
+      <p id="finalScore" class="danger">0</p>
+      <button id="restartBtn" type="button">再来一局</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById("game");
+      const ctx = canvas.getContext("2d");
+      const scoreEl = document.getElementById("score");
+      const gameOverEl = document.getElementById("gameOver");
+      const finalScoreEl = document.getElementById("finalScore");
+      const restartBtn = document.getElementById("restartBtn");
+
+      const playerImg = new Image();
+      playerImg.src = "../images/jump/i.png";
+
+      const state = {
+        dpr: Math.max(1, Math.min(2.2, window.devicePixelRatio || 1)),
+        score: 0,
+        charging: false,
+        charge: 0,
+        maxCharge: 1.25,
+        cameraX: 0,
+        cameraZ: 0,
+        gameOver: false,
+        lastTs: 0,
+        platforms: [],
+        player: {
+          x: 0,
+          y: 0,
+          z: 0,
+          compress: 0,
+          startX: 0,
+          startZ: 0,
+          targetX: 0,
+          targetZ: 0,
+          jumpT: 0,
+          jumpDur: 0.38,
+          jumping: false,
+        },
+        nextAxis: "z",
+      };
+
+      function roundedRectPath(x, y, w, h, r) {
+        if (typeof ctx.roundRect === "function") {
+          ctx.roundRect(x, y, w, h, r);
+          return;
+        }
+        const radius = Math.min(r, w * 0.5, h * 0.5);
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + w - radius, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+        ctx.lineTo(x + w, y + h - radius);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+        ctx.lineTo(x + radius, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+      }
+
+      function resize() {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        state.dpr = Math.max(1, Math.min(2.2, window.devicePixelRatio || 1));
+        canvas.width = Math.floor(w * state.dpr);
+        canvas.height = Math.floor(h * state.dpr);
+        canvas.style.width = w + "px";
+        canvas.style.height = h + "px";
+        ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+      }
+
+      function reset() {
+        state.score = 0;
+        state.charging = false;
+        state.charge = 0;
+        state.gameOver = false;
+        state.platforms = [];
+        state.nextAxis = Math.random() > 0.5 ? "x" : "z";
+
+        const first = makePlatform(0, 0, randColor());
+        const dist = randDist();
+        const second =
+          state.nextAxis === "x"
+            ? makePlatform(dist, 0, randColor())
+            : makePlatform(0, -dist, randColor());
+        state.platforms.push(first, second);
+
+        state.player.x = first.x;
+        state.player.y = 0;
+        state.player.z = first.z;
+        state.player.compress = 0;
+        state.player.jumping = false;
+
+        updateCamera();
+        updateScore(0);
+        gameOverEl.style.display = "none";
+      }
+
+      function makePlatform(x, z, color) {
+        return {
+          x,
+          z,
+          size: 76,
+          height: 28,
+          color,
+        };
+      }
+
+      function randColor() {
+        const list = ["#ffffff", "#e9f2e8", "#cce4f9", "#f8e8d6", "#ece7fa", "#f5f5f5"];
+        return list[(Math.random() * list.length) | 0];
+      }
+
+      function randDist() {
+        return 110 + ((Math.random() * 7) | 0) * 20;
+      }
+
+      function project(x, y, z) {
+        const rx = x - state.cameraX;
+        const rz = z - state.cameraZ;
+        const sx = (rx - rz) * 0.86;
+        const sy = (rx + rz) * 0.44 - y;
+        return {
+          x: canvas.clientWidth * 0.5 + sx,
+          y: canvas.clientHeight * 0.48 + sy,
+        };
+      }
+
+      function drawDiamond(cx, cy, w, h, fill) {
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - h);
+        ctx.lineTo(cx + w, cy);
+        ctx.lineTo(cx, cy + h);
+        ctx.lineTo(cx - w, cy);
+        ctx.closePath();
+        ctx.fillStyle = fill;
+        ctx.fill();
+      }
+
+      function shade(hex, amount) {
+        const raw = hex.replace("#", "");
+        const num = parseInt(raw.length === 3 ? raw.replace(/(.)/g, "$1$1") : raw, 16);
+        const r = Math.max(0, Math.min(255, ((num >> 16) & 255) + amount));
+        const g = Math.max(0, Math.min(255, ((num >> 8) & 255) + amount));
+        const b = Math.max(0, Math.min(255, (num & 255) + amount));
+        return "rgb(" + r + "," + g + "," + b + ")";
+      }
+
+      function drawPlatform(p) {
+        const top = project(p.x, p.height, p.z);
+        const base = project(p.x, 0, p.z);
+        const hw = p.size * 0.58;
+        const hh = p.size * 0.28;
+
+        drawDiamond(base.x, base.y + 0.5, hw, hh, "rgba(0,0,0,0.08)");
+
+        ctx.beginPath();
+        ctx.moveTo(top.x, top.y + hh);
+        ctx.lineTo(top.x + hw, top.y);
+        ctx.lineTo(base.x + hw, base.y);
+        ctx.lineTo(base.x, base.y + hh);
+        ctx.closePath();
+        ctx.fillStyle = shade(p.color, -22);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(top.x, top.y + hh);
+        ctx.lineTo(top.x - hw, top.y);
+        ctx.lineTo(base.x - hw, base.y);
+        ctx.lineTo(base.x, base.y + hh);
+        ctx.closePath();
+        ctx.fillStyle = shade(p.color, -38);
+        ctx.fill();
+
+        drawDiamond(top.x, top.y, hw, hh, p.color);
+      }
+
+      function drawPlayer() {
+        const p = state.player;
+        const pos = project(p.x, p.y + 28, p.z);
+        const squash = p.compress;
+
+        ctx.save();
+        ctx.translate(pos.x, pos.y);
+        ctx.scale(1 + squash * 0.35, 1 - squash * 0.4);
+
+        const hasTexture = playerImg.complete && playerImg.naturalWidth > 0;
+
+        if (hasTexture) {
+          const bodyRatio = playerImg.naturalWidth / playerImg.naturalHeight;
+          const bodyH = 54;
+          const bodyW = Math.max(20, bodyH * bodyRatio);
+
+          // Use the original sprite directly: no tint, no extra shadow, no background processing.
+          ctx.drawImage(playerImg, -bodyW / 2, -58, bodyW, bodyH);
+
+          ctx.restore();
+          return;
+        }
+
+        ctx.beginPath();
+        ctx.ellipse(0, 1.5, 13, 4.5, 0, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(0,0,0,0.2)";
+        ctx.fill();
+
+        ctx.fillStyle = "#eef2f7";
+        ctx.beginPath();
+        roundedRectPath(-10, -33, 20, 30, 9);
+        ctx.fill();
+
+        ctx.fillStyle = "#5f6d7f";
+        ctx.beginPath();
+        roundedRectPath(-9, -21, 18, 16, 8);
+        ctx.fill();
+
+        ctx.fillStyle = "#d6b796";
+        ctx.beginPath();
+        ctx.arc(0, -38, 11, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#2e2e2e";
+        ctx.beginPath();
+        ctx.arc(-3.4, -39.6, 1.1, 0, Math.PI * 2);
+        ctx.arc(3.4, -39.6, 1.1, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = "#7a4f3a";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(0, -34.2, 2.2, 0, Math.PI);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      function updateScore(v) {
+        state.score = v;
+        scoreEl.textContent = String(v);
+      }
+
+      function updateCamera(smooth) {
+        const cur = state.platforms[state.platforms.length - 2];
+        const nxt = state.platforms[state.platforms.length - 1];
+        const tx = (cur.x + nxt.x) * 0.5;
+        const tz = (cur.z + nxt.z) * 0.5;
+        if (!smooth) {
+          state.cameraX = tx;
+          state.cameraZ = tz;
+          return;
+        }
+        state.cameraX += (tx - state.cameraX) * 0.09;
+        state.cameraZ += (tz - state.cameraZ) * 0.09;
+      }
+
+      function appendPlatform() {
+        const last = state.platforms[state.platforms.length - 1];
+        const dist = randDist();
+        state.nextAxis = Math.random() > 0.5 ? "x" : "z";
+        const x = state.nextAxis === "x" ? last.x + dist : last.x;
+        const z = state.nextAxis === "z" ? last.z - dist : last.z;
+        state.platforms.push(makePlatform(x, z, randColor()));
+        if (state.platforms.length > 6) {
+          state.platforms.shift();
+        }
+      }
+
+      function startCharge() {
+        if (state.gameOver || state.player.jumping) {
+          return;
+        }
+        state.charging = true;
+        state.charge = 0;
+      }
+
+      function releaseJump() {
+        if (!state.charging || state.gameOver || state.player.jumping) {
+          return;
+        }
+        state.charging = false;
+
+        const from = state.platforms[state.platforms.length - 2];
+        const to = state.platforms[state.platforms.length - 1];
+        const axisX = to.x !== from.x;
+        const dir = axisX ? Math.sign(to.x - from.x) : Math.sign(to.z - from.z);
+
+        const distance = 55 + state.charge * 300;
+        const dx = axisX ? dir * distance : 0;
+        const dz = axisX ? 0 : dir * distance;
+
+        const p = state.player;
+        p.startX = p.x;
+        p.startZ = p.z;
+        p.targetX = p.x + dx;
+        p.targetZ = p.z + dz;
+        p.jumpT = 0;
+        p.jumpDur = 0.35 + Math.min(0.22, distance / 1000);
+        p.jumping = true;
+        p.compress = 0;
+      }
+
+      function checkLanding() {
+        const p = state.player;
+        const current = state.platforms[state.platforms.length - 2];
+        const next = state.platforms[state.platforms.length - 1];
+
+        const dCur = Math.hypot(p.x - current.x, p.z - current.z);
+        const dNext = Math.hypot(p.x - next.x, p.z - next.z);
+        const hitRadius = current.size * 0.5;
+
+        if (dNext <= hitRadius) {
+          p.x = next.x;
+          p.z = next.z;
+          updateScore(state.score + (dNext < 8 ? 2 : 1));
+          appendPlatform();
+          return;
+        }
+
+        if (dCur <= hitRadius) {
+          p.x = current.x;
+          p.z = current.z;
+          return;
+        }
+
+        triggerGameOver();
+      }
+
+      function triggerGameOver() {
+        state.gameOver = true;
+        finalScoreEl.textContent = String(state.score);
+        gameOverEl.style.display = "flex";
+      }
+
+      function update(dt) {
+        const p = state.player;
+
+        if (state.charging) {
+          state.charge = Math.min(state.maxCharge, state.charge + dt * 0.8);
+          p.compress = Math.min(1, p.compress + dt * 2.8);
+        } else {
+          p.compress = Math.max(0, p.compress - dt * 6);
+        }
+
+        if (p.jumping) {
+          p.jumpT += dt / p.jumpDur;
+          const t = Math.min(1, p.jumpT);
+          const up = 1 - Math.pow(2 * t - 1, 2);
+          p.x = p.startX + (p.targetX - p.startX) * t;
+          p.z = p.startZ + (p.targetZ - p.startZ) * t;
+          p.y = Math.max(0, up * 110);
+
+          if (t >= 1) {
+            p.jumping = false;
+            p.y = 0;
+            checkLanding();
+          }
+        }
+
+        updateCamera(true);
+      }
+
+      function renderBackground() {
+        const w = canvas.clientWidth;
+        const h = canvas.clientHeight;
+
+        const g = ctx.createLinearGradient(0, 0, 0, h);
+        g.addColorStop(0, "#d6eefb");
+        g.addColorStop(1, "#f6fafc");
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.beginPath();
+        ctx.ellipse(w * 0.5, h * 0.78, w * 0.5, h * 0.22, 0, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(160, 183, 202, 0.13)";
+        ctx.fill();
+      }
+
+      function drawPowerBar() {
+        if (!state.charging) {
+          return;
+        }
+        const w = canvas.clientWidth;
+        const h = canvas.clientHeight;
+        const bw = Math.min(220, w * 0.6);
+        const bh = 8;
+        const x = (w - bw) / 2;
+        const y = h - 28;
+
+        ctx.fillStyle = "rgba(30,41,59,0.25)";
+        ctx.beginPath();
+        roundedRectPath(x, y, bw, bh, 99);
+        ctx.fill();
+
+        ctx.fillStyle = "#1f8f58";
+        ctx.beginPath();
+        roundedRectPath(x, y, bw * (state.charge / state.maxCharge), bh, 99);
+        ctx.fill();
+      }
+
+      function draw() {
+        renderBackground();
+
+        const sorted = state.platforms.slice().sort((a, b) => (a.x + a.z) - (b.x + b.z));
+        for (let i = 0; i < sorted.length; i += 1) {
+          drawPlatform(sorted[i]);
+        }
+
+        drawPlayer();
+        drawPowerBar();
+      }
+
+      function loop(ts) {
+        if (!state.lastTs) {
+          state.lastTs = ts;
+        }
+        const dt = Math.min(0.033, (ts - state.lastTs) / 1000);
+        state.lastTs = ts;
+
+        if (!state.gameOver) {
+          update(dt);
+        }
+        draw();
+        requestAnimationFrame(loop);
+      }
+
+      function bindEvents() {
+        const press = (e) => {
+          e.preventDefault();
+          startCharge();
+        };
+        const release = (e) => {
+          e.preventDefault();
+          releaseJump();
+        };
+
+        canvas.addEventListener("pointerdown", press, { passive: false });
+        window.addEventListener("pointerup", release, { passive: false });
+        canvas.addEventListener("pointercancel", release, { passive: false });
+
+        restartBtn.addEventListener("click", reset);
+        window.addEventListener("resize", resize);
+      }
+
+      resize();
+      bindEvents();
+      reset();
+      requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+</html>
