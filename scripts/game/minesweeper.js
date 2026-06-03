@@ -165,7 +165,7 @@ function revealCell(cell) {
     state.revealedCount += 1;
 
     if (cell.mine) {
-        cell.el.textContent = "🧨";
+        cell.el.textContent = "💣";
         cell.el.classList.add("mine");
         cell.el.classList.add("mine-hit");
         return;
@@ -214,7 +214,7 @@ function revealAllMines() {
                 cell.revealed = true;
                 cell.el.classList.add("revealed");
                 cell.el.classList.add("mine");
-                cell.el.textContent = "🧨";
+                cell.el.textContent = "💣";
             }
         }
     }
