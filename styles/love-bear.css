@@ -565,8 +565,8 @@ h2 {
     .winnie-bear {
         width: 86px;
         height: 102px;
-        left: 76vw;
-        top: 72vh;
+        left: calc(100vw - 98px);
+        top: 38vh;
     }
 
     .love-pop-text {

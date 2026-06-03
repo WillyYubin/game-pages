@@ -15,6 +15,10 @@ const floatingHearts = [];
 const burstHearts = [];
 let bearDrag = null;
 
+function isPortraitMobile() {
+    return window.innerWidth <= 760 && window.innerHeight > window.innerWidth;
+}
+
 function setCanvasSize() {
     dpr = Math.min(2, window.devicePixelRatio || 1);
     width = window.innerWidth;
@@ -175,9 +179,10 @@ function spawnDomHeart() {
     const heart = document.createElement("span");
     heart.className = "pop-heart";
     heart.textContent = Math.random() > 0.5 ? "❤" : "💕";
-    const left = 24 + Math.random() * 52;
+    const left = isPortraitMobile() ? 14 + Math.random() * 60 : 24 + Math.random() * 52;
+    const bottom = isPortraitMobile() ? 34 + Math.random() * 18 : 18 + Math.random() * 20;
     heart.style.left = `${left}%`;
-    heart.style.bottom = `${18 + Math.random() * 20}%`;
+    heart.style.bottom = `${bottom}%`;
     heartLayer.appendChild(heart);
     setTimeout(() => heart.remove(), 1300);
 }
@@ -222,8 +227,18 @@ function initBearPosition() {
         return;
     }
 
-    const left = window.innerWidth * 0.78;
-    const top = window.innerHeight * 0.64;
+    let left;
+    let top;
+
+    if (isPortraitMobile()) {
+        const margin = 12;
+        left = window.innerWidth - winnieBear.offsetWidth - margin;
+        top = Math.max(72, window.innerHeight * 0.38);
+    } else {
+        left = window.innerWidth * 0.78;
+        top = window.innerHeight * 0.64;
+    }
+
     setBearPosition(left, top);
 }
 
