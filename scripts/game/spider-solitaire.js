@@ -1,3 +1,4 @@
+/* yubin@copyright.com */
 const boardEl = document.getElementById("board");
 const foundationZoneEl = document.querySelector(".foundation-zone");
 const spiderToolbarEl = document.querySelector(".spider-toolbar");

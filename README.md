@@ -1,3 +1,4 @@
+<!-- yubin@copyright.com -->
 # game-pages
 
 ## Structure

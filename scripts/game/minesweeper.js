@@ -1,3 +1,4 @@
+/* yubin@copyright.com */
 const boardEl = document.getElementById("board");
 const mineLeftEl = document.getElementById("mineLeft");
 const timerEl = document.getElementById("timer");

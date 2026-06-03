@@ -1,4 +1,5 @@
-﻿const canvas = document.getElementById("gameCanvas");
+/* yubin@copyright.com */
+const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         const castleHealthNode = document.getElementById("castleHealth");
         const killCountNode = document.getElementById("killCount");

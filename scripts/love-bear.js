@@ -1,3 +1,4 @@
+/* yubin@copyright.com */
 const sweetButton = document.getElementById("sweetButton");
 const sweetMeter = document.getElementById("sweetMeter");
 const sweetValue = document.getElementById("sweetValue");

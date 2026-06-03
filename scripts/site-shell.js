@@ -1,3 +1,4 @@
+/* yubin@copyright.com */
 (function () {
     const path = (window.location.pathname || "").replace(/\\/g, "/").toLowerCase();
 
@@ -91,6 +92,7 @@
             drawer.classList.toggle("open", isOpen);
             backdrop.classList.toggle("open", isOpen);
             toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+            document.body.classList.toggle("drawer-open", isOpen);
         }
 
         toggle.addEventListener("click", () => {

@@ -1,3 +1,4 @@
+/* yubin@copyright.com */
 function focusEle(ele){
 	try {document.getElementById(ele).focus();}
 	catch(e){}
