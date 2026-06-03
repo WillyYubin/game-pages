@@ -1,0 +1,55 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>守城砸怪</title>
+    <link rel="stylesheet" href="../styles/game.css" />
+</head>
+
+<body>
+    <a class="back-home" href="../index.html">返回首页</a>
+
+    <div class="game-shell">
+        <canvas id="gameCanvas" width="1280" height="720" aria-label="守城砸怪游戏画布"></canvas>
+
+        <div class="hud">
+            <section class="panel">
+                <h1 class="title">守城砸怪</h1>
+                <p class="tips">小怪会自动生成并向城堡前进。按住鼠标拖动小怪，快速朝地面砸下去就会扣血。别让小怪碰到左侧城堡。</p>
+            </section>
+
+            <section class="panel stats">
+                <div class="stat-card">
+                    <span class="stat-label">城堡血量</span>
+                    <strong class="stat-value" id="castleHealth">100</strong>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">击败小怪</span>
+                    <strong class="stat-value" id="killCount">0</strong>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">当前波次</span>
+                    <strong class="stat-value" id="waveNumber">1</strong>
+                </div>
+            </section>
+
+            <div class="controls">
+                <button id="restartButton" type="button">重新开始</button>
+            </div>
+        </div>
+
+        <div class="overlay" id="gameOverOverlay">
+            <div class="game-over-card">
+                <h2>城堡失守</h2>
+                <p id="gameOverText">城堡血量归零，游戏结束。</p>
+                <button id="restartOverlayButton" type="button">再来一局</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../scripts/game/main.js" defer></script>
+</body>
+
+</html>

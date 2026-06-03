@@ -1,0 +1,92 @@
+:root {
+    --bg-0: #0f172a;
+    --bg-1: #1e293b;
+    --glow: #f59e0b;
+    --ink: #e2e8f0;
+    --muted: #94a3b8;
+    --card: rgba(15, 23, 42, 0.72);
+    --card-border: rgba(245, 158, 11, 0.35);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100dvh;
+    font-family: "Trebuchet MS", "Segoe UI", "Microsoft YaHei", sans-serif;
+    color: var(--ink);
+    background:
+        radial-gradient(circle at 20% 10%, rgba(245, 158, 11, 0.18), transparent 36%),
+        radial-gradient(circle at 80% 90%, rgba(14, 165, 233, 0.22), transparent 44%),
+        linear-gradient(140deg, var(--bg-0), var(--bg-1));
+}
+
+.portal {
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+
+.entry-card {
+    width: min(92vw, 560px);
+    border-radius: 24px;
+    padding: 34px 30px;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    box-shadow: 0 30px 80px rgba(2, 8, 23, 0.45);
+    backdrop-filter: blur(8px);
+}
+
+.eyebrow {
+    margin: 0 0 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 12px;
+}
+
+h1 {
+    margin: 0;
+    font-size: clamp(30px, 5vw, 46px);
+    line-height: 1.05;
+}
+
+.summary {
+    margin: 14px 0 24px;
+    color: #cbd5e1;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.entry-actions {
+    display: grid;
+    gap: 12px;
+}
+
+.entry-button {
+    display: inline-block;
+    text-decoration: none;
+    color: #1f2937;
+    background: linear-gradient(180deg, #fde68a, #f59e0b);
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 12px 20px;
+    box-shadow: 0 10px 22px rgba(245, 158, 11, 0.35);
+}
+
+.entry-button:hover {
+    transform: translateY(-1px);
+}
+
+.entry-button {
+    touch-action: manipulation;
+}
+
+@media (max-width: 520px) {
+    .entry-card {
+        padding: 26px 20px;
+    }
+}

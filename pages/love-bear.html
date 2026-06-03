@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>小彬彬爱小熊</title>
-    <link rel="stylesheet" href="styles/love-bear.css" />
+    <link rel="stylesheet" href="../styles/love-bear.css" />
 </head>
 
 <body>
@@ -14,20 +14,6 @@
     <div class="spark spark-b"></div>
     <div class="spark spark-c"></div>
 
-    <button id="sideToggle" class="side-toggle" type="button" aria-controls="sideDrawer" aria-expanded="false">模块</button>
-    <aside id="sideDrawer" class="side-drawer" aria-label="模块导航">
-        <div class="drawer-head">
-            <h2>功能模块</h2>
-            <button id="sideClose" class="drawer-close" type="button" aria-label="关闭侧边栏">×</button>
-        </div>
-        <nav class="drawer-nav">
-            <a class="drawer-link current" href="index.html">小熊主页</a>
-            <a class="drawer-link" href="pages/castle-defense.html">castle-defense</a>
-            <a class="drawer-link" href="fangdai/fangdai.html">fangdai</a>
-        </nav>
-    </aside>
-    <div id="drawerBackdrop" class="drawer-backdrop" aria-hidden="true"></div>
-
     <main class="love-page">
         <header class="hero card" aria-label="小彬彬爱小熊主题区域">
             <p class="badge">甜蜜频道上线</p>
@@ -35,6 +21,7 @@
             <p class="hero-text">今天也要把小熊宠成世界上最可爱的主角。抱抱、贴贴、撒糖，全部安排上。</p>
             <div class="hero-actions">
                 <button id="sweetButton" class="btn btn-primary" type="button">给小熊加一颗糖</button>
+                <a class="btn btn-ghost" href="../index.html">返回首页</a>
             </div>
             <div class="meter-wrap" aria-label="今日甜蜜值">
                 <p class="meter-label">今日甜蜜值</p>
@@ -91,7 +78,7 @@
         <div class="bear-body"></div>
     </div>
 
-    <script src="scripts/love-bear.js" defer></script>
+    <script src="../scripts/love-bear.js" defer></script>
 </body>
 
 </html>
