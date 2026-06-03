@@ -51,6 +51,16 @@ let timerId = null;
 
 const DRAG_THRESHOLD = 7;
 
+function readCssNumber(name, fallback) {
+    const raw = window.getComputedStyle(document.documentElement).getPropertyValue(name);
+    const value = Number.parseFloat(raw);
+    return Number.isFinite(value) ? value : fallback;
+}
+
+function getStackOffset(card) {
+    return card.faceUp ? readCssNumber("--stack-gap-faceup", 26) : readCssNumber("--stack-gap-facedown", 14);
+}
+
 function seededRng(seed) {
     let x = seed >>> 0;
     return () => {
@@ -281,7 +291,6 @@ function createPipsEl(rank, suit) {
 function createCardEl(card, colIndex, cardIndex) {
     const cardEl = document.createElement("div");
     cardEl.className = `card${card.faceUp ? "" : " face-down"}`;
-    cardEl.style.top = `${cardIndex * (card.faceUp ? 26 : 14)}px`;
     cardEl.dataset.col = String(colIndex);
     cardEl.dataset.index = String(cardIndex);
     cardEl.dataset.cardId = String(card.id);
@@ -323,7 +332,7 @@ function renderBoard() {
         column.forEach((card, cardIndex) => {
             const cardEl = createCardEl(card, colIndex, cardIndex);
             cardEl.style.top = `${top}px`;
-            top += card.faceUp ? 26 : 14;
+            top += getStackOffset(card);
             colEl.appendChild(cardEl);
         });
 
@@ -810,6 +819,11 @@ boardEl.addEventListener("pointerdown", onPointerDown);
 window.addEventListener("pointermove", onPointerMove, { passive: true });
 window.addEventListener("pointerup", onPointerUp, { passive: true });
 window.addEventListener("pointercancel", onPointerUp, { passive: true });
+window.addEventListener("resize", () => {
+    if (game) {
+        render();
+    }
+}, { passive: true });
 
 stockButton.addEventListener("click", dealFromStock);
 hintButton.addEventListener("click", showHint);

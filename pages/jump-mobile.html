@@ -4,14 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
   <title>小熊跳一跳 Mobile</title>
+  <link rel="stylesheet" href="../styles/site-shell.css" />
   <style>
     :root {
-      --bg-top: #d9eefb;
-      --bg-bottom: #f6fafc;
+      --bg-top: #ffe6bf;
+      --bg-mid: #ffc0ac;
+      --bg-bottom: #ff8fa3;
       --panel-bg: rgba(255, 255, 255, 0.82);
       --text: #1f2a3a;
       --accent: #2c8f58;
       --danger: #d84747;
+      --chip-h: 46px;
     }
 
     * {
@@ -27,7 +30,7 @@
       overflow: hidden;
       touch-action: none;
       font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-      background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+      background: linear-gradient(160deg, var(--bg-top) 0%, var(--bg-mid) 52%, var(--bg-bottom) 100%);
       color: var(--text);
     }
 
@@ -40,32 +43,72 @@
     .hud {
       position: fixed;
       left: 0;
-      top: env(safe-area-inset-top, 0);
+      top: max(12px, env(safe-area-inset-top, 0px));
       width: 100%;
-      padding: 12px 14px;
+      padding: 0 max(14px, env(safe-area-inset-right, 0px));
+      padding-left: calc(max(14px, env(safe-area-inset-left, 0px)) + 120px);
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: center;
+      gap: 12px;
       pointer-events: none;
       z-index: 2;
     }
 
     .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: var(--chip-h);
       background: var(--panel-bg);
       backdrop-filter: blur(4px);
-      border-radius: 12px;
-      padding: 8px 12px;
+      border-radius: 999px;
+      padding: 0 18px;
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-      font-size: 14px;
+      font-size: 16px;
       line-height: 1.2;
+      font-weight: 700;
     }
 
     #score {
-      font-weight: 700;
-      font-size: 18px;
+      min-width: 82px;
+      font-size: 20px;
       color: var(--accent);
-      min-width: 70px;
       text-align: center;
+    }
+
+    .side-toggle {
+      top: max(12px, env(safe-area-inset-top, 0px));
+      left: max(12px, env(safe-area-inset-left, 0px));
+      min-height: var(--chip-h);
+      padding: 0 20px;
+      font-size: 16px;
+    }
+
+    @media (max-width: 440px) {
+      :root {
+        --chip-h: 40px;
+      }
+
+      .hud {
+        padding-left: calc(max(12px, env(safe-area-inset-left, 0px)) + 96px);
+        gap: 8px;
+      }
+
+      .badge {
+        padding: 0 14px;
+        font-size: 14px;
+      }
+
+      #score {
+        min-width: 66px;
+        font-size: 18px;
+      }
+
+      .side-toggle {
+        padding: 0 16px;
+        font-size: 15px;
+      }
     }
 
     .overlay {
@@ -140,7 +183,6 @@
   <canvas id="game"></canvas>
 
   <div class="hud">
-    <div class="badge">小熊跳一跳</div>
     <div id="score" class="badge">0</div>
     <div class="badge">长按后松开</div>
   </div>
@@ -156,6 +198,7 @@
     </div>
   </div>
 
+  <script src="../scripts/site-shell.js" defer></script>
   <script>
     (function () {
       const canvas = document.getElementById("game");
@@ -517,14 +560,15 @@
         const h = canvas.clientHeight;
 
         const g = ctx.createLinearGradient(0, 0, 0, h);
-        g.addColorStop(0, "#d6eefb");
-        g.addColorStop(1, "#f6fafc");
+        g.addColorStop(0, "#ffe6bf");
+        g.addColorStop(0.52, "#ffc0ac");
+        g.addColorStop(1, "#ff8fa3");
         ctx.fillStyle = g;
         ctx.fillRect(0, 0, w, h);
 
         ctx.beginPath();
         ctx.ellipse(w * 0.5, h * 0.78, w * 0.5, h * 0.22, 0, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(160, 183, 202, 0.13)";
+        ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
         ctx.fill();
       }
 

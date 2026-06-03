@@ -33,6 +33,7 @@
                 '  <nav class="drawer-nav">',
                 `    <a class="drawer-link" href="${prefix}index.html" data-route="index.html">小熊主页</a>`,
                 `    <a class="drawer-link" href="${prefix}pages/castle-defense.html" data-route="pages/castle-defense.html">守城砸怪</a>`,
+                `    <a class="drawer-link" href="${prefix}pages/jump-mobile.html" data-route="pages/jump-mobile.html">跳一跳</a>`,
                 `    <a class="drawer-link" href="${prefix}pages/minesweeper.html" data-route="pages/minesweeper.html">扫雷小游戏</a>`,
                 `    <a class="drawer-link" href="${prefix}pages/spider-solitaire.html" data-route="pages/spider-solitaire.html">蜘蛛纸牌</a>`,
                 `    <a class="drawer-link" href="${prefix}fangdai/fangdai.html" data-route="fangdai/fangdai.html">房贷计算</a>`,

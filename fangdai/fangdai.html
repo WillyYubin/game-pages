@@ -12,6 +12,95 @@
     <link rel="stylesheet" href="../styles/site-shell.css" />
     <link rel="stylesheet" type="text/css" href="./css/my-common.min.css"/>
     <link rel="stylesheet" type="text/css" href="./css/my-houseloan.min.css"/>
+    <style>
+        :root {
+            --home-top: #ffe6bf;
+            --home-mid: #ffc0ac;
+            --home-bottom: #ff8fa3;
+            --panel-bg: rgba(255, 247, 234, 0.92);
+            --panel-border: rgba(156, 84, 95, 0.24);
+            --ink-strong: #4a2e3a;
+            --ink-soft: #6a4450;
+            --accent: #f29c80;
+            --accent-strong: #ea8668;
+            --accent-text: #ffffff;
+        }
+
+        body {
+            color: var(--ink-strong);
+            background:
+                radial-gradient(circle at 12% 16%, rgba(255, 242, 192, 0.5), transparent 34%),
+                radial-gradient(circle at 86% 82%, rgba(161, 236, 221, 0.34), transparent 30%),
+                linear-gradient(160deg, var(--home-top) 0%, var(--home-mid) 52%, var(--home-bottom) 100%);
+        }
+
+        .header {
+            background: linear-gradient(180deg, #f5ac93, #ee9478) !important;
+        }
+
+        .logo img {
+            filter: saturate(0.9) contrast(0.95);
+        }
+
+        .calculator,
+        .side,
+        .ui-bar[skin="title"],
+        .calc-result,
+        .data-detail,
+        .ui-bar-fixed {
+            background: var(--panel-bg) !important;
+            border-color: var(--panel-border) !important;
+            color: var(--ink-strong) !important;
+        }
+
+        .switch-tabs ul,
+        .field .ui-text,
+        .field .ui-select,
+        .value-bar,
+        .result-list li,
+        .data-table th,
+        .data-table td,
+        .use-help,
+        .ui-list .list-item {
+            background: rgba(255, 255, 255, 0.78) !important;
+            border-color: var(--panel-border) !important;
+            color: var(--ink-strong) !important;
+        }
+
+        .switch-tabs .select-tab {
+            background: linear-gradient(180deg, #ffd8b0, #ffc59f) !important;
+        }
+
+        .switch-tabs .normal-tab {
+            background: rgba(255, 255, 255, 0.82) !important;
+        }
+
+        .mod-tit p,
+        .title,
+        .atc-title,
+        .item-name,
+        .item-value,
+        .repay-method,
+        .field-wrap > label,
+        .view-more .txt,
+        .side .title {
+            color: var(--ink-strong) !important;
+        }
+
+        .ui-btn[skin="blue"],
+        #calculate,
+        #recalculate {
+            background: linear-gradient(180deg, var(--accent), var(--accent-strong)) !important;
+            border-color: transparent !important;
+            color: var(--accent-text) !important;
+        }
+
+        .footer,
+        .footer a {
+            background: rgba(242, 156, 128, 0.9) !important;
+            color: #ffffff !important;
+        }
+    </style>
     <script src="../scripts/site-shell.js" defer></script>
     <script type="text/javascript" src="./js/zepto.min.js"></script>
     <script type="text/javascript" src="./js/houseloan_calculator.js"></script>
@@ -42,7 +131,7 @@
 
 
 </head>
-<body>
+<body class="fangdai-home-tone">
 <div class="header">
     <div class="container">
         <div class="logo">
@@ -56,9 +145,6 @@
             <div class="ui-bar" skin="title">
                 <at class="title">
                     房贷计算模块
-                    <div class="right">
-                        <a class="ui-btn" skin="blue mini i-home" href="../index.html"></a>
-                    </div>
                 </at>
             </div>
             <nav class="switch-tabs big-switch-tabs">

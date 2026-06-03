@@ -5,6 +5,18 @@ const statusEl = document.getElementById("statusText");
 const difficultySelect = document.getElementById("difficultySelect");
 const restartButton = document.getElementById("restartButton");
 
+const MOBILE_LONG_PRESS_MS = 420;
+
+function isMobileClient() {
+    const ua = navigator.userAgent || "";
+    const isPhoneUa = /android|iphone|ipod|windows phone|mobile/i.test(ua);
+    const isTabletUa = /ipad/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+    const coarsePointer = typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches;
+    return coarsePointer && (isPhoneUa || isTabletUa);
+}
+
+const enableMobileLongPressFlag = isMobileClient();
+
 const LEVELS = {
     easy: { rows: 9, cols: 9, mines: 10 },
     medium: { rows: 12, cols: 12, mines: 24 },
@@ -13,6 +25,27 @@ const LEVELS = {
 
 let state = null;
 let timerId = null;
+
+function updateBoardSizing() {
+    if (!state) {
+        return;
+    }
+
+    const wrap = boardEl.parentElement;
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+    const wrapWidth = wrap ? wrap.clientWidth : boardEl.clientWidth;
+    const compact = viewportWidth <= 760;
+    const gap = state.cols >= 16 ? 2 : state.cols >= 12 ? 3 : 4;
+    const usableWidth = Math.max(220, wrapWidth - (compact ? 4 : 0));
+    const maxSize = compact ? 32 : 36;
+    const minSize = compact ? 18 : 24;
+    const cellSize = Math.max(minSize, Math.min(maxSize, Math.floor((usableWidth - gap * (state.cols - 1)) / state.cols)));
+
+    boardEl.style.setProperty("--cell-gap", `${gap}px`);
+    boardEl.style.setProperty("--cell-size", `${cellSize}px`);
+    boardEl.style.setProperty("--cell-radius", `${Math.max(6, Math.round(cellSize * 0.28))}px`);
+    boardEl.style.gridTemplateColumns = `repeat(${state.cols}, ${cellSize}px)`;
+}
 
 function createCell(row, col) {
     return {
@@ -114,6 +147,7 @@ function buildBoard(levelKey) {
 
     updateHud();
     setStatus("准备就绪，祝你好运。");
+    updateBoardSizing();
 }
 
 function placeMines(firstRow, firstCol) {
@@ -276,7 +310,25 @@ function handleRightClick(row, col) {
 }
 
 function bindBoardEvents() {
+    let longPressTimer = null;
+    let longPressTarget = null;
+    let longPressStartX = 0;
+    let longPressStartY = 0;
+    let suppressNextTap = false;
+
+    function clearLongPress() {
+        if (longPressTimer !== null) {
+            window.clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+        longPressTarget = null;
+    }
+
     boardEl.addEventListener("click", (event) => {
+        if (enableMobileLongPressFlag && suppressNextTap) {
+            suppressNextTap = false;
+            return;
+        }
         const target = event.target.closest(".cell");
         if (!target) {
             return;
@@ -292,10 +344,65 @@ function bindBoardEvents() {
             return;
         }
         event.preventDefault();
+
+        // On mobile we use long-press to place flags, and avoid duplicate toggles from context menu.
+        if (enableMobileLongPressFlag) {
+            return;
+        }
+
         const row = Number(target.dataset.row);
         const col = Number(target.dataset.col);
         handleRightClick(row, col);
     });
+
+    if (!enableMobileLongPressFlag) {
+        return;
+    }
+
+    boardEl.addEventListener("pointerdown", (event) => {
+        if (event.pointerType !== "touch") {
+            return;
+        }
+        const target = event.target.closest(".cell");
+        if (!target) {
+            return;
+        }
+
+        const row = Number(target.dataset.row);
+        const col = Number(target.dataset.col);
+        const cell = state && state.cells[row] ? state.cells[row][col] : null;
+        if (!cell || cell.revealed || state.ended) {
+            return;
+        }
+
+        clearLongPress();
+        longPressTarget = target;
+        longPressStartX = event.clientX;
+        longPressStartY = event.clientY;
+
+        longPressTimer = window.setTimeout(() => {
+            if (!longPressTarget) {
+                return;
+            }
+            handleRightClick(row, col);
+            suppressNextTap = true;
+            clearLongPress();
+        }, MOBILE_LONG_PRESS_MS);
+    }, { passive: true });
+
+    boardEl.addEventListener("pointermove", (event) => {
+        if (!longPressTarget || event.pointerType !== "touch") {
+            return;
+        }
+        const dx = event.clientX - longPressStartX;
+        const dy = event.clientY - longPressStartY;
+        if (Math.hypot(dx, dy) > 10) {
+            clearLongPress();
+        }
+    }, { passive: true });
+
+    boardEl.addEventListener("pointerup", clearLongPress, { passive: true });
+    boardEl.addEventListener("pointercancel", clearLongPress, { passive: true });
 }
 
 restartButton.addEventListener("click", () => {
@@ -305,6 +412,8 @@ restartButton.addEventListener("click", () => {
 difficultySelect.addEventListener("change", () => {
     buildBoard(difficultySelect.value);
 });
+
+window.addEventListener("resize", updateBoardSizing, { passive: true });
 
 bindBoardEvents();
 buildBoard(difficultySelect.value);

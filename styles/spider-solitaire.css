@@ -1,7 +1,8 @@
 :root {
     --card-w: 84px;
     --card-h: 118px;
-    --stack-gap: 28px;
+    --stack-gap-faceup: 26px;
+    --stack-gap-facedown: 14px;
     --fg: #f2f8ff;
     --muted: #b7c8d8;
     --panel: rgba(9, 37, 27, 0.58);
@@ -172,7 +173,6 @@ body {
     grid-template-columns: repeat(10, minmax(0, 1fr));
     gap: 9px;
     min-height: 560px;
-    touch-action: none;
 }
 
 .column {
@@ -181,7 +181,6 @@ body {
     padding: 4px;
     min-height: 540px;
     position: relative;
-    touch-action: none;
 }
 
 .card {
@@ -198,7 +197,6 @@ body {
     padding: 0;
     box-shadow: 0 8px 14px rgba(9, 15, 24, 0.28);
     user-select: none;
-    touch-action: none;
     transition: top 140ms ease, left 140ms ease, transform 140ms ease, box-shadow 140ms ease;
 }
 
@@ -350,7 +348,8 @@ body {
     :root {
         --card-w: 72px;
         --card-h: 100px;
-        --stack-gap: 22px;
+        --stack-gap-faceup: 22px;
+        --stack-gap-facedown: 12px;
     }
 
     .board {
@@ -363,19 +362,122 @@ body {
 }
 
 @media (max-width: 760px) {
+    :root {
+        --card-w: 56px;
+        --card-h: 78px;
+        --stack-gap-faceup: 18px;
+        --stack-gap-facedown: 10px;
+    }
+
     .spider-shell {
-        width: calc(100% - 14px);
+        width: calc(100% - 10px);
         margin-top: 68px;
+        gap: 10px;
+    }
+
+    .spider-toolbar,
+    .spider-top,
+    .board {
+        padding: 10px;
+    }
+
+    .stats {
+        gap: 10px;
+        font-size: 0.92rem;
     }
 
     .board {
         overflow-x: auto;
         display: flex;
-        gap: 8px;
-        padding-bottom: 8px;
+        gap: 6px;
+        padding-bottom: 10px;
+        min-height: 0;
+        touch-action: pan-x;
+        overscroll-behavior-x: contain;
+        -webkit-overflow-scrolling: touch;
     }
 
     .column {
         min-width: calc(var(--card-w) + 8px);
+        min-height: 380px;
+    }
+
+    .actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: stretch;
+    }
+
+    .actions label {
+        grid-column: 1 / -1;
+    }
+
+    .actions select,
+    .actions button {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .spider-top {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .stock-zone,
+    .foundation-zone {
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    .foundation {
+        overflow-x: auto;
+        padding-bottom: 4px;
+    }
+
+    .done-pile {
+        width: 36px;
+        height: 48px;
+    }
+
+    .done-pile::after {
+        font-size: 0.66rem;
+    }
+
+    .card,
+    .column {
+        touch-action: auto;
+    }
+
+    .card,
+    .card .card-art {
+        border-radius: 8px;
+    }
+}
+
+@media (max-width: 420px) {
+    :root {
+        --card-w: 48px;
+        --card-h: 68px;
+        --stack-gap-faceup: 15px;
+        --stack-gap-facedown: 8px;
+    }
+
+    .stats {
+        gap: 8px;
+        font-size: 0.88rem;
+    }
+
+    .actions {
+        grid-template-columns: 1fr;
+    }
+
+    .board {
+        gap: 5px;
+        padding: 8px;
+    }
+
+    .column {
+        min-width: calc(var(--card-w) + 6px);
+        min-height: 336px;
     }
 }
