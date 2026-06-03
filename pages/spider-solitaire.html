@@ -52,6 +52,15 @@
         <section id="board" class="board panel" aria-label="牌桌"></section>
     </main>
 
+    <script>
+        (function () {
+            const block = (event) => event.preventDefault();
+            ["copy", "cut", "contextmenu", "selectstart", "dragstart"].forEach((name) => {
+                document.addEventListener(name, block, { passive: false });
+            });
+        })();
+    </script>
+
     <script src="../scripts/site-shell.js" defer></script>
     <script src="../scripts/game/spider-solitaire.js" defer></script>
 </body>

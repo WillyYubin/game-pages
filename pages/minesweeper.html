@@ -45,6 +45,15 @@
         </section>
     </main>
 
+    <script>
+        (function () {
+            const block = (event) => event.preventDefault();
+            ["copy", "cut", "contextmenu", "selectstart", "dragstart"].forEach((name) => {
+                document.addEventListener(name, block, { passive: false });
+            });
+        })();
+    </script>
+
     <script src="../scripts/site-shell.js" defer></script>
     <script src="../scripts/game/minesweeper.js" defer></script>
 </body>
