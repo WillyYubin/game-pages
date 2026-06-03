@@ -29,37 +29,6 @@ body.spider-scroll-lock {
     overflow: hidden;
 }
 
-.page-scroll-rail {
-    position: fixed;
-    left: 8px;
-    top: max(8px, env(safe-area-inset-top, 0px));
-    bottom: max(8px, env(safe-area-inset-bottom, 0px));
-    width: 18px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.14);
-    border: 1px solid rgba(255, 255, 255, 0.26);
-    box-shadow: inset 0 0 0 1px rgba(11, 35, 25, 0.12), 0 8px 18px rgba(3, 11, 8, 0.22);
-    backdrop-filter: blur(2px);
-    z-index: 12030;
-    touch-action: none;
-    user-select: none;
-}
-
-.page-scroll-thumb {
-    position: absolute;
-    left: 2px;
-    width: calc(100% - 4px);
-    min-height: 48px;
-    border-radius: 999px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(219, 244, 232, 0.86));
-    box-shadow: 0 8px 16px rgba(5, 17, 12, 0.24);
-    transform: translateY(0);
-}
-
-body.spider-dragging-card .page-scroll-rail {
-    pointer-events: none;
-}
-
 .spider-shell {
     width: min(1320px, calc(100% - 24px));
     margin: 70px auto 18px;
@@ -79,6 +48,7 @@ body.spider-dragging-card .page-scroll-rail {
     padding: 12px;
     display: grid;
     gap: 8px;
+    touch-action: none;
 }
 
 .spider-toolbar h1 {
@@ -139,6 +109,7 @@ body.spider-dragging-card .page-scroll-rail {
     justify-content: space-between;
     gap: 14px;
     align-items: center;
+    touch-action: none;
 }
 
 .stock-zone,
@@ -408,7 +379,6 @@ body.spider-dragging-card .page-scroll-rail {
         width: calc(100% - 10px);
         margin-top: 68px;
         gap: 10px;
-        margin-left: 32px;
     }
 
     .spider-toolbar,

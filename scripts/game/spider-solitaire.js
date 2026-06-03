@@ -1,9 +1,10 @@
 const boardEl = document.getElementById("board");
-const scrollRailEl = document.getElementById("pageScrollRail");
-const scrollThumbEl = document.getElementById("pageScrollThumb");
+const foundationZoneEl = document.querySelector(".foundation-zone");
+const spiderToolbarEl = document.querySelector(".spider-toolbar");
+const spiderTopEl = document.querySelector(".spider-top");
+const foundationEl = document.getElementById("foundation");
 const stockButton = document.getElementById("stockButton");
 const stockRoundsEl = document.getElementById("stockRounds");
-const foundationEl = document.getElementById("foundation");
 const statusText = document.getElementById("statusText");
 const moveCountEl = document.getElementById("moveCount");
 const timerTextEl = document.getElementById("timerText");
@@ -54,13 +55,10 @@ let timerId = null;
 const DRAG_THRESHOLD = 4;
 
 const scrollState = {
-    maxScroll: 0,
-    thumbRange: 0,
-    thumbHeight: 48,
-    railRect: null,
     dragging: false,
-    dragOffsetY: 0,
-    pointerId: null
+    pointerId: null,
+    lastClientY: 0,
+    captureEl: null
 };
 
 const dragRenderState = {
@@ -84,80 +82,50 @@ function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
 }
 
-function getMaxPageScroll() {
-    const doc = document.documentElement;
-    return Math.max(0, (doc ? doc.scrollHeight : 0) - window.innerHeight);
-}
-
-function refreshScrollMetrics() {
-    if (!scrollRailEl || !scrollThumbEl) {
-        return;
-    }
-    const railRect = scrollRailEl.getBoundingClientRect();
-    scrollState.railRect = railRect;
-    scrollState.maxScroll = getMaxPageScroll();
-
-    const minThumb = 48;
-    const viewportRatio = window.innerHeight / Math.max(window.innerHeight, document.documentElement.scrollHeight);
-    const thumbHeight = clamp(Math.round(railRect.height * viewportRatio), minThumb, railRect.height);
-    scrollState.thumbHeight = thumbHeight;
-    scrollState.thumbRange = Math.max(0, railRect.height - thumbHeight);
-    scrollThumbEl.style.height = `${thumbHeight}px`;
-    syncScrollThumb();
-}
-
-function syncScrollThumb() {
-    if (!scrollThumbEl) {
-        return;
-    }
-    if (scrollState.maxScroll <= 0 || scrollState.thumbRange <= 0) {
-        scrollThumbEl.style.transform = "translateY(0)";
-        return;
-    }
-    const ratio = window.scrollY / scrollState.maxScroll;
-    const y = scrollState.thumbRange * ratio;
-    scrollThumbEl.style.transform = `translateY(${y}px)`;
-}
-
-function scrollByRailClientY(clientY) {
-    if (!scrollState.railRect) {
-        refreshScrollMetrics();
-    }
-    const rail = scrollState.railRect;
-    if (!rail || scrollState.maxScroll <= 0) {
-        return;
-    }
-    const localY = clamp(clientY - rail.top - scrollState.dragOffsetY, 0, scrollState.thumbRange);
-    const ratio = scrollState.thumbRange <= 0 ? 0 : localY / scrollState.thumbRange;
-    window.scrollTo({ top: scrollState.maxScroll * ratio, behavior: "auto" });
-    syncScrollThumb();
-}
-
-function setupPageScrollRail() {
-    if (!scrollRailEl || !scrollThumbEl) {
+function setupFoundationDragScroll() {
+    if (!foundationZoneEl || !spiderToolbarEl || !spiderTopEl) {
         return;
     }
     document.body.classList.add("spider-scroll-lock");
 
-    const startDrag = (clientY) => {
-        refreshScrollMetrics();
-        const thumbRect = scrollThumbEl.getBoundingClientRect();
-        scrollState.dragging = true;
-        setInteractionMode("rail");
-        scrollState.dragOffsetY = clientY >= thumbRect.top && clientY <= thumbRect.bottom ? clientY - thumbRect.top : scrollState.thumbHeight * 0.5;
-        scrollByRailClientY(clientY);
+    const isScrollDragTarget = (target) => {
+        if (!target) {
+            return false;
+        }
+        const inAllowedZone = !!target.closest(".spider-toolbar, .spider-top, .foundation-zone");
+        if (!inAllowedZone) {
+            return false;
+        }
+
+        const inBlockedControl = !!target.closest("button, select, input, label, a, .actions, .stats, .stock, .done-pile");
+        if (inBlockedControl) {
+            return false;
+        }
+
+        return true;
     };
 
-    scrollRailEl.addEventListener("pointerdown", (event) => {
+    const startDrag = (event, captureEl) => {
+        scrollState.dragging = true;
+        scrollState.pointerId = typeof event.pointerId === "number" ? event.pointerId : null;
+        scrollState.lastClientY = event.clientY;
+        scrollState.captureEl = captureEl;
+        setInteractionMode("rail");
+        if (captureEl && typeof captureEl.setPointerCapture === "function" && scrollState.pointerId !== null) {
+            captureEl.setPointerCapture(scrollState.pointerId);
+        }
+    };
+
+    document.addEventListener("pointerdown", (event) => {
         if (interactionState.mode === "card" || (game && game.drag)) {
             return;
         }
-        event.preventDefault();
-        scrollState.pointerId = typeof event.pointerId === "number" ? event.pointerId : null;
-        if (typeof scrollRailEl.setPointerCapture === "function" && scrollState.pointerId !== null) {
-            scrollRailEl.setPointerCapture(scrollState.pointerId);
+        if (!isScrollDragTarget(event.target)) {
+            return;
         }
-        startDrag(event.clientY);
+        event.preventDefault();
+        const captureEl = event.target.closest(".spider-toolbar, .spider-top, .foundation-zone");
+        startDrag(event, captureEl);
     });
 
     window.addEventListener("pointermove", (event) => {
@@ -168,19 +136,26 @@ function setupPageScrollRail() {
             return;
         }
         event.preventDefault();
-        scrollByRailClientY(event.clientY);
+
+        const deltaY = event.clientY - scrollState.lastClientY;
+        const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+        const nextY = clamp(window.scrollY - deltaY, 0, maxScroll);
+        window.scrollTo({ top: nextY, behavior: "auto" });
+        scrollState.lastClientY = event.clientY;
     }, { passive: false });
 
     const stopDrag = () => {
-        if (scrollState.pointerId !== null && typeof scrollRailEl.releasePointerCapture === "function") {
+        if (scrollState.pointerId !== null && scrollState.captureEl && typeof scrollState.captureEl.releasePointerCapture === "function") {
             try {
-                scrollRailEl.releasePointerCapture(scrollState.pointerId);
+                scrollState.captureEl.releasePointerCapture(scrollState.pointerId);
             } catch (err) {
                 // Ignore if already released.
             }
         }
         scrollState.dragging = false;
         scrollState.pointerId = null;
+        scrollState.lastClientY = 0;
+        scrollState.captureEl = null;
         if (!(game && game.drag)) {
             setInteractionMode("idle");
         }
@@ -193,22 +168,15 @@ function setupPageScrollRail() {
         if (scrollState.dragging) {
             return;
         }
-        if (scrollRailEl.contains(event.target)) {
+        if (isScrollDragTarget(event.target)) {
             event.preventDefault();
             const delta = event.deltaY;
-            window.scrollTo({ top: clamp(window.scrollY + delta, 0, scrollState.maxScroll), behavior: "auto" });
-            syncScrollThumb();
+            const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+            window.scrollTo({ top: clamp(window.scrollY + delta, 0, maxScroll), behavior: "auto" });
             return;
         }
         event.preventDefault();
     }, { passive: false });
-
-    window.addEventListener("scroll", syncScrollThumb, { passive: true });
-    window.addEventListener("resize", () => {
-        refreshScrollMetrics();
-    }, { passive: true });
-
-    refreshScrollMetrics();
 }
 
 function flushDragFrame() {
@@ -1034,7 +1002,7 @@ window.addEventListener("resize", () => {
     }
 }, { passive: true });
 
-setupPageScrollRail();
+setupFoundationDragScroll();
 
 stockButton.addEventListener("click", dealFromStock);
 hintButton.addEventListener("click", showHint);
