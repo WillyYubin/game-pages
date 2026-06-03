@@ -1,4 +1,6 @@
 const boardEl = document.getElementById("board");
+const scrollRailEl = document.getElementById("pageScrollRail");
+const scrollThumbEl = document.getElementById("pageScrollThumb");
 const stockButton = document.getElementById("stockButton");
 const stockRoundsEl = document.getElementById("stockRounds");
 const foundationEl = document.getElementById("foundation");
@@ -49,7 +51,183 @@ const UNDO_LIMIT = 80;
 let game = null;
 let timerId = null;
 
-const DRAG_THRESHOLD = 7;
+const DRAG_THRESHOLD = 4;
+
+const scrollState = {
+    maxScroll: 0,
+    thumbRange: 0,
+    thumbHeight: 48,
+    railRect: null,
+    dragging: false,
+    dragOffsetY: 0,
+    pointerId: null
+};
+
+const dragRenderState = {
+    rafId: 0,
+    x: 0,
+    y: 0,
+    layer: null
+};
+
+const interactionState = {
+    mode: "idle"
+};
+
+function setInteractionMode(mode) {
+    interactionState.mode = mode;
+    document.body.classList.toggle("spider-dragging-card", mode === "card");
+    document.body.classList.toggle("spider-dragging-rail", mode === "rail");
+}
+
+function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+}
+
+function getMaxPageScroll() {
+    const doc = document.documentElement;
+    return Math.max(0, (doc ? doc.scrollHeight : 0) - window.innerHeight);
+}
+
+function refreshScrollMetrics() {
+    if (!scrollRailEl || !scrollThumbEl) {
+        return;
+    }
+    const railRect = scrollRailEl.getBoundingClientRect();
+    scrollState.railRect = railRect;
+    scrollState.maxScroll = getMaxPageScroll();
+
+    const minThumb = 48;
+    const viewportRatio = window.innerHeight / Math.max(window.innerHeight, document.documentElement.scrollHeight);
+    const thumbHeight = clamp(Math.round(railRect.height * viewportRatio), minThumb, railRect.height);
+    scrollState.thumbHeight = thumbHeight;
+    scrollState.thumbRange = Math.max(0, railRect.height - thumbHeight);
+    scrollThumbEl.style.height = `${thumbHeight}px`;
+    syncScrollThumb();
+}
+
+function syncScrollThumb() {
+    if (!scrollThumbEl) {
+        return;
+    }
+    if (scrollState.maxScroll <= 0 || scrollState.thumbRange <= 0) {
+        scrollThumbEl.style.transform = "translateY(0)";
+        return;
+    }
+    const ratio = window.scrollY / scrollState.maxScroll;
+    const y = scrollState.thumbRange * ratio;
+    scrollThumbEl.style.transform = `translateY(${y}px)`;
+}
+
+function scrollByRailClientY(clientY) {
+    if (!scrollState.railRect) {
+        refreshScrollMetrics();
+    }
+    const rail = scrollState.railRect;
+    if (!rail || scrollState.maxScroll <= 0) {
+        return;
+    }
+    const localY = clamp(clientY - rail.top - scrollState.dragOffsetY, 0, scrollState.thumbRange);
+    const ratio = scrollState.thumbRange <= 0 ? 0 : localY / scrollState.thumbRange;
+    window.scrollTo({ top: scrollState.maxScroll * ratio, behavior: "auto" });
+    syncScrollThumb();
+}
+
+function setupPageScrollRail() {
+    if (!scrollRailEl || !scrollThumbEl) {
+        return;
+    }
+    document.body.classList.add("spider-scroll-lock");
+
+    const startDrag = (clientY) => {
+        refreshScrollMetrics();
+        const thumbRect = scrollThumbEl.getBoundingClientRect();
+        scrollState.dragging = true;
+        setInteractionMode("rail");
+        scrollState.dragOffsetY = clientY >= thumbRect.top && clientY <= thumbRect.bottom ? clientY - thumbRect.top : scrollState.thumbHeight * 0.5;
+        scrollByRailClientY(clientY);
+    };
+
+    scrollRailEl.addEventListener("pointerdown", (event) => {
+        if (interactionState.mode === "card" || (game && game.drag)) {
+            return;
+        }
+        event.preventDefault();
+        scrollState.pointerId = typeof event.pointerId === "number" ? event.pointerId : null;
+        if (typeof scrollRailEl.setPointerCapture === "function" && scrollState.pointerId !== null) {
+            scrollRailEl.setPointerCapture(scrollState.pointerId);
+        }
+        startDrag(event.clientY);
+    });
+
+    window.addEventListener("pointermove", (event) => {
+        if (!scrollState.dragging) {
+            return;
+        }
+        if (scrollState.pointerId !== null && typeof event.pointerId === "number" && event.pointerId !== scrollState.pointerId) {
+            return;
+        }
+        event.preventDefault();
+        scrollByRailClientY(event.clientY);
+    }, { passive: false });
+
+    const stopDrag = () => {
+        if (scrollState.pointerId !== null && typeof scrollRailEl.releasePointerCapture === "function") {
+            try {
+                scrollRailEl.releasePointerCapture(scrollState.pointerId);
+            } catch (err) {
+                // Ignore if already released.
+            }
+        }
+        scrollState.dragging = false;
+        scrollState.pointerId = null;
+        if (!(game && game.drag)) {
+            setInteractionMode("idle");
+        }
+    };
+
+    window.addEventListener("pointerup", stopDrag, { passive: true });
+    window.addEventListener("pointercancel", stopDrag, { passive: true });
+
+    document.addEventListener("wheel", (event) => {
+        if (scrollState.dragging) {
+            return;
+        }
+        if (scrollRailEl.contains(event.target)) {
+            event.preventDefault();
+            const delta = event.deltaY;
+            window.scrollTo({ top: clamp(window.scrollY + delta, 0, scrollState.maxScroll), behavior: "auto" });
+            syncScrollThumb();
+            return;
+        }
+        event.preventDefault();
+    }, { passive: false });
+
+    window.addEventListener("scroll", syncScrollThumb, { passive: true });
+    window.addEventListener("resize", () => {
+        refreshScrollMetrics();
+    }, { passive: true });
+
+    refreshScrollMetrics();
+}
+
+function flushDragFrame() {
+    dragRenderState.rafId = 0;
+    if (!dragRenderState.layer) {
+        return;
+    }
+    dragRenderState.layer.style.transform = `translate3d(${dragRenderState.x}px, ${dragRenderState.y}px, 0)`;
+}
+
+function queueDragFrame(layer, x, y) {
+    dragRenderState.layer = layer;
+    dragRenderState.x = x;
+    dragRenderState.y = y;
+    if (dragRenderState.rafId) {
+        return;
+    }
+    dragRenderState.rafId = window.requestAnimationFrame(flushDragFrame);
+}
 
 function readCssNumber(name, fallback) {
     const raw = window.getComputedStyle(document.documentElement).getPropertyValue(name);
@@ -582,21 +760,7 @@ function showHint() {
         return;
     }
     const move = moves[0];
-    const sourceSel = `.card[data-col=\"${move.fromCol}\"][data-index=\"${move.fromIndex}\"]`;
-    const targetSel = `.column[data-col=\"${move.toCol}\"] .card:last-child`;
-    const source = boardEl.querySelector(sourceSel);
-    const target = boardEl.querySelector(targetSel) || boardEl.querySelector(`.column[data-col=\"${move.toCol}\"]`);
-    if (!source || !target) {
-        return;
-    }
-    source.classList.add("hint");
-    target.classList.add("hint");
-    window.clearTimeout(game.hintTimer);
-    game.hintTimer = window.setTimeout(() => {
-        source.classList.remove("hint");
-        target.classList.remove("hint");
-    }, 1100);
-    setStatus("提示已高亮：尝试将该序列移到绿色目标列。");
+    setStatus(`可尝试：第${move.fromCol + 1}列 移到 第${move.toCol + 1}列。`);
 }
 
 function evaluateNoMoveState() {
@@ -638,8 +802,9 @@ function createDragLayer(fromCol, fromIndex) {
     const firstRect = movingEls[0].getBoundingClientRect();
     const layer = document.createElement("div");
     layer.className = "drag-layer";
-    layer.style.left = `${firstRect.left}px`;
-    layer.style.top = `${firstRect.top}px`;
+    layer.style.left = "0";
+    layer.style.top = "0";
+    layer.style.transform = `translate3d(${firstRect.left}px, ${firstRect.top}px, 0)`;
 
     movingEls.forEach((el) => {
         const clone = el.cloneNode(true);
@@ -672,6 +837,9 @@ function columnFromPoint(x, y) {
 }
 
 function onPointerDown(event) {
+    if (interactionState.mode === "rail" || scrollState.dragging) {
+        return;
+    }
     if (typeof event.button === "number" && event.button !== 0) {
         return;
     }
@@ -686,6 +854,13 @@ function onPointerDown(event) {
     }
 
     const pointer = getPointer(event);
+    if (event.cancelable) {
+        event.preventDefault();
+    }
+    if (typeof cardEl.setPointerCapture === "function" && typeof event.pointerId === "number") {
+        cardEl.setPointerCapture(event.pointerId);
+    }
+
     game.drag = {
         fromCol: col,
         fromIndex: index,
@@ -695,14 +870,26 @@ function onPointerDown(event) {
         offsetX: 0,
         offsetY: 0,
         moved: false,
-        started: false
+        started: false,
+        pointerId: typeof event.pointerId === "number" ? event.pointerId : null
     };
+    setInteractionMode("card");
 }
 
 function onPointerMove(event) {
     if (!game.drag) {
         return;
     }
+    if (interactionState.mode === "rail") {
+        return;
+    }
+    if (game.drag.pointerId !== null && typeof event.pointerId === "number" && event.pointerId !== game.drag.pointerId) {
+        return;
+    }
+    if (event.cancelable) {
+        event.preventDefault();
+    }
+
     const p = getPointer(event);
     if (!game.drag.started) {
         const distance = Math.hypot(p.x - game.drag.startX, p.y - game.drag.startY);
@@ -712,12 +899,14 @@ function onPointerMove(event) {
         const dragPack = createDragLayer(game.drag.fromCol, game.drag.fromIndex);
         if (!dragPack) {
             game.drag = null;
+            setInteractionMode("idle");
             return;
         }
         const src = boardEl.querySelector(`.card[data-col="${game.drag.fromCol}"][data-index="${game.drag.fromIndex}"]`);
         if (!src) {
             dragPack.layer.remove();
             game.drag = null;
+            setInteractionMode("idle");
             return;
         }
         const rect = src.getBoundingClientRect();
@@ -728,13 +917,15 @@ function onPointerMove(event) {
         setSourceCardsDragging(game.drag.fromCol, game.drag.fromIndex, true);
     }
 
-    game.drag.layer.style.left = `${p.x - game.drag.offsetX}px`;
-    game.drag.layer.style.top = `${p.y - game.drag.offsetY}px`;
+    queueDragFrame(game.drag.layer, p.x - game.drag.offsetX, p.y - game.drag.offsetY);
     game.drag.moved = true;
 }
 
 function onPointerUp(event) {
     if (!game.drag) {
+        return;
+    }
+    if (game.drag.pointerId !== null && typeof event.pointerId === "number" && event.pointerId !== game.drag.pointerId) {
         return;
     }
 
@@ -750,6 +941,15 @@ function onPointerUp(event) {
     const drag = game.drag;
     game.drag = null;
 
+    const sourceCard = boardEl.querySelector(`.card[data-col="${drag.fromCol}"][data-index="${drag.fromIndex}"]`);
+    if (sourceCard && typeof sourceCard.releasePointerCapture === "function" && drag.pointerId !== null) {
+        try {
+            sourceCard.releasePointerCapture(drag.pointerId);
+        } catch (err) {
+            // Ignore release errors when pointer capture has already been cleared.
+        }
+    }
+
     const restoreSource = () => {
         if (drag.started) {
             setSourceCardsDragging(drag.fromCol, drag.fromIndex, false);
@@ -757,6 +957,7 @@ function onPointerUp(event) {
     };
 
     if (!drag.started) {
+        setInteractionMode("idle");
         suppressNextClick();
         attemptSelectOrMove(drag.fromCol, drag.fromIndex);
         return;
@@ -764,10 +965,16 @@ function onPointerUp(event) {
 
     const p = getPointer(event);
     const targetCol = columnFromPoint(p.x, p.y);
+    if (dragRenderState.rafId) {
+        window.cancelAnimationFrame(dragRenderState.rafId);
+        dragRenderState.rafId = 0;
+    }
+    dragRenderState.layer = null;
     drag.layer.remove();
     restoreSource();
 
     if (targetCol === null) {
+        setInteractionMode("idle");
         suppressNextClick();
         if (!drag.moved) {
             attemptSelectOrMove(drag.fromCol, drag.fromIndex);
@@ -776,6 +983,7 @@ function onPointerUp(event) {
     }
 
     if (targetCol === drag.fromCol && !drag.moved) {
+        setInteractionMode("idle");
         suppressNextClick();
         attemptSelectOrMove(drag.fromCol, drag.fromIndex);
         return;
@@ -785,6 +993,7 @@ function onPointerUp(event) {
     if (!moved) {
         setStatus("该列无法接收此序列。");
     }
+    setInteractionMode("idle");
     suppressNextClick();
 }
 
@@ -816,7 +1025,7 @@ boardEl.addEventListener("click", (event) => {
 });
 
 boardEl.addEventListener("pointerdown", onPointerDown);
-window.addEventListener("pointermove", onPointerMove, { passive: true });
+window.addEventListener("pointermove", onPointerMove, { passive: false });
 window.addEventListener("pointerup", onPointerUp, { passive: true });
 window.addEventListener("pointercancel", onPointerUp, { passive: true });
 window.addEventListener("resize", () => {
@@ -824,6 +1033,8 @@ window.addEventListener("resize", () => {
         render();
     }
 }, { passive: true });
+
+setupPageScrollRail();
 
 stockButton.addEventListener("click", dealFromStock);
 hintButton.addEventListener("click", showHint);

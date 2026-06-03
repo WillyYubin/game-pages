@@ -22,6 +22,42 @@ body {
         radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.06), transparent 35%),
         radial-gradient(circle at 80% 86%, rgba(255, 255, 255, 0.05), transparent 42%),
         linear-gradient(165deg, #1e694a, #12553b 55%, #0e4731 100%);
+    overscroll-behavior: none;
+}
+
+body.spider-scroll-lock {
+    overflow: hidden;
+}
+
+.page-scroll-rail {
+    position: fixed;
+    left: 8px;
+    top: max(8px, env(safe-area-inset-top, 0px));
+    bottom: max(8px, env(safe-area-inset-bottom, 0px));
+    width: 18px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.26);
+    box-shadow: inset 0 0 0 1px rgba(11, 35, 25, 0.12), 0 8px 18px rgba(3, 11, 8, 0.22);
+    backdrop-filter: blur(2px);
+    z-index: 12030;
+    touch-action: none;
+    user-select: none;
+}
+
+.page-scroll-thumb {
+    position: absolute;
+    left: 2px;
+    width: calc(100% - 4px);
+    min-height: 48px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(219, 244, 232, 0.86));
+    box-shadow: 0 8px 16px rgba(5, 17, 12, 0.24);
+    transform: translateY(0);
+}
+
+body.spider-dragging-card .page-scroll-rail {
+    pointer-events: none;
 }
 
 .spider-shell {
@@ -197,6 +233,7 @@ body {
     padding: 0;
     box-shadow: 0 8px 14px rgba(9, 15, 24, 0.28);
     user-select: none;
+    touch-action: none;
     transition: top 140ms ease, left 140ms ease, transform 140ms ease, box-shadow 140ms ease;
 }
 
@@ -287,8 +324,7 @@ body {
 }
 
 .card.selected {
-    outline: 3px solid #ffe16f;
-    outline-offset: 1px;
+    outline: none;
 }
 
 .card.source-hidden {
@@ -296,8 +332,7 @@ body {
 }
 
 .card.hint {
-    outline: 3px solid #85ff85;
-    outline-offset: 1px;
+    outline: none;
 }
 
 .drag-layer {
@@ -373,6 +408,7 @@ body {
         width: calc(100% - 10px);
         margin-top: 68px;
         gap: 10px;
+        margin-left: 32px;
     }
 
     .spider-toolbar,
@@ -443,7 +479,6 @@ body {
         font-size: 0.66rem;
     }
 
-    .card,
     .column {
         touch-action: auto;
     }
