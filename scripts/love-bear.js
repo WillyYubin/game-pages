@@ -5,10 +5,6 @@ const heartLayer = document.getElementById("heartLayer");
 const loveFx = document.getElementById("loveFx");
 const winnieBear = document.getElementById("winnieBear");
 const loveTextLayer = document.getElementById("loveTextLayer");
-const sideToggle = document.getElementById("sideToggle");
-const sideDrawer = document.getElementById("sideDrawer");
-const sideClose = document.getElementById("sideClose");
-const drawerBackdrop = document.getElementById("drawerBackdrop");
 
 const ctx = loveFx.getContext("2d");
 let sweet = 52;
@@ -284,16 +280,6 @@ function onBearKeyDown(event) {
     }
 }
 
-function setDrawerOpen(isOpen) {
-    if (!sideDrawer || !drawerBackdrop || !sideToggle) {
-        return;
-    }
-
-    sideDrawer.classList.toggle("open", isOpen);
-    drawerBackdrop.classList.toggle("open", isOpen);
-    sideToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
-}
-
 sweetButton.addEventListener("click", () => {
     sweet = Math.min(100, sweet + 6);
     refreshSweet();
@@ -313,29 +299,6 @@ if (winnieBear) {
     winnieBear.addEventListener("pointerup", onBearPointerUp);
     winnieBear.addEventListener("pointercancel", onBearPointerUp);
     winnieBear.addEventListener("keydown", onBearKeyDown);
-}
-
-if (sideToggle && sideDrawer && drawerBackdrop) {
-    sideToggle.addEventListener("click", () => {
-        const next = !sideDrawer.classList.contains("open");
-        setDrawerOpen(next);
-    });
-
-    if (sideClose) {
-        sideClose.addEventListener("click", () => setDrawerOpen(false));
-    }
-
-    drawerBackdrop.addEventListener("click", () => setDrawerOpen(false));
-
-    sideDrawer.querySelectorAll("a").forEach((link) => {
-        link.addEventListener("click", () => setDrawerOpen(false));
-    });
-
-    window.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
-            setDrawerOpen(false);
-        }
-    });
 }
 
 window.addEventListener("resize", () => {

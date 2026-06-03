@@ -1,0 +1,220 @@
+:root {
+    --bg-a: #0b1220;
+    --bg-b: #111a31;
+    --panel: rgba(10, 16, 32, 0.75);
+    --line: rgba(143, 198, 255, 0.25);
+    --text: #eaf4ff;
+    --muted: #9eb3c9;
+    --safe: #2d6ee5;
+    --safe-2: #3e83fb;
+    --flag: #ff596b;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: var(--text);
+    background:
+        radial-gradient(circle at 15% 20%, rgba(65, 128, 255, 0.18), transparent 38%),
+        radial-gradient(circle at 85% 80%, rgba(0, 214, 255, 0.15), transparent 42%),
+        linear-gradient(140deg, var(--bg-a), var(--bg-b));
+}
+
+.back-home {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 10;
+    text-decoration: none;
+    color: var(--text);
+    padding: 10px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(9, 14, 28, 0.68);
+    backdrop-filter: blur(6px);
+}
+
+.mine-shell {
+    width: min(1000px, calc(100% - 32px));
+    margin: 72px auto 34px;
+    display: grid;
+    gap: 14px;
+}
+
+.panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.2);
+}
+
+.panel-head h1 {
+    margin: 0 0 8px;
+    font-size: clamp(1.5rem, 2.2vw, 2rem);
+}
+
+.panel-head p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.panel-controls {
+    display: grid;
+    grid-template-columns: 1.4fr auto 1fr 1fr;
+    gap: 12px;
+    align-items: end;
+}
+
+.field {
+    display: grid;
+    gap: 6px;
+    font-size: 0.95rem;
+}
+
+.field span {
+    color: var(--muted);
+}
+
+select,
+button {
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: rgba(9, 14, 28, 0.9);
+    color: var(--text);
+    font-size: 0.95rem;
+    padding: 0 12px;
+}
+
+button {
+    cursor: pointer;
+    background: linear-gradient(140deg, #1750c4, #3f8dff);
+    border-color: rgba(143, 198, 255, 0.45);
+}
+
+button:hover {
+    filter: brightness(1.08);
+}
+
+.stat-box {
+    display: grid;
+    gap: 2px;
+    align-content: center;
+    justify-items: start;
+    min-height: 40px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 6px 10px;
+    background: rgba(9, 14, 28, 0.6);
+}
+
+.stat-box span {
+    color: var(--muted);
+    font-size: 0.82rem;
+}
+
+.stat-box strong {
+    font-size: 1.05rem;
+}
+
+.panel-status p {
+    margin: 0;
+    color: #d9ebff;
+}
+
+.board-wrap {
+    padding: 4px;
+}
+
+.board {
+    width: fit-content;
+    margin: 0 auto;
+    display: grid;
+    gap: 4px;
+    justify-content: center;
+}
+
+.cell {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    border: 0;
+    border-radius: 9px;
+    background: linear-gradient(150deg, var(--safe), var(--safe-2));
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 120ms ease, filter 120ms ease, background 120ms ease;
+}
+
+.cell:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+}
+
+.cell.revealed {
+    cursor: default;
+    background: rgba(8, 13, 26, 0.95);
+    border: 1px solid rgba(143, 198, 255, 0.22);
+    transform: none;
+}
+
+.cell.flagged {
+    background: linear-gradient(150deg, #9c2735, var(--flag));
+}
+
+.cell.mine-hit {
+    background: linear-gradient(150deg, #3d0f15, #df2238);
+}
+
+.cell.mine {
+    font-size: 16px;
+}
+
+.cell[data-num="1"] {
+    color: #61a0ff;
+}
+
+.cell[data-num="2"] {
+    color: #47d99e;
+}
+
+.cell[data-num="3"] {
+    color: #ffd166;
+}
+
+.cell[data-num="4"] {
+    color: #b794ff;
+}
+
+.cell[data-num="5"],
+.cell[data-num="6"],
+.cell[data-num="7"],
+.cell[data-num="8"] {
+    color: #ff8ca3;
+}
+
+@media (max-width: 760px) {
+    .mine-shell {
+        margin-top: 78px;
+    }
+
+    .panel-controls {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .cell {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+    }
+}

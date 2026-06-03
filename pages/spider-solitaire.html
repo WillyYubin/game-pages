@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>蜘蛛纸牌</title>
+    <link rel="stylesheet" href="../styles/site-shell.css" />
+    <link rel="stylesheet" href="../styles/spider-solitaire.css" />
+</head>
+
+<body>
+    <main class="spider-shell" aria-label="蜘蛛纸牌游戏区域">
+        <header class="spider-toolbar panel">
+            <h1>蜘蛛纸牌</h1>
+            <div class="stats" aria-live="polite">
+                <p>步数 <strong id="moveCount">0</strong></p>
+                <p>用时 <strong id="timerText">0s</strong></p>
+                <p>已完成 <strong id="doneCount">0/8</strong></p>
+                <p>得分 <strong id="scoreText">500</strong></p>
+            </div>
+            <div class="actions">
+                <label for="difficultySelect">难度</label>
+                <select id="difficultySelect">
+                    <option value="1" selected>单花色</option>
+                    <option value="2">双花色</option>
+                    <option value="4">四花色</option>
+                </select>
+                <button id="hintButton" type="button">提示</button>
+                <button id="undoButton" type="button">撤销</button>
+                <button id="redealButton" type="button">重开本局</button>
+                <button id="newGameButton" type="button">重新开始</button>
+            </div>
+            <p id="statusText" class="status">准备开始，拖拽或点击移动卡牌。</p>
+        </header>
+
+        <section class="spider-top panel">
+            <div class="stock-zone">
+                <button id="stockButton" class="stock" type="button" aria-label="发牌堆"></button>
+                <p>剩余发牌 <strong id="stockRounds">5</strong></p>
+            </div>
+            <div class="foundation-zone">
+                <p>完成区</p>
+                <div id="foundation" class="foundation" aria-label="已完成序列"></div>
+            </div>
+        </section>
+
+        <section id="board" class="board panel" aria-label="牌桌"></section>
+    </main>
+
+    <script src="../scripts/site-shell.js" defer></script>
+    <script src="../scripts/game/spider-solitaire.js" defer></script>
+</body>
+
+</html>

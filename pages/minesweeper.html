@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>扫雷挑战</title>
+    <link rel="stylesheet" href="../styles/site-shell.css" />
+    <link rel="stylesheet" href="../styles/minesweeper.css" />
+</head>
+
+<body>
+    <main class="mine-shell">
+        <section class="panel panel-head">
+            <h1>扫雷挑战</h1>
+            <p>左键翻开格子，右键插旗。翻开全部安全格子即可获胜。</p>
+        </section>
+
+        <section class="panel panel-controls" aria-label="扫雷控制区">
+            <label class="field" for="difficultySelect">
+                <span>难度</span>
+                <select id="difficultySelect">
+                    <option value="easy">简单 9x9 / 10 雷</option>
+                    <option value="medium" selected>中等 12x12 / 24 雷</option>
+                    <option value="hard">困难 16x16 / 45 雷</option>
+                </select>
+            </label>
+            <button id="restartButton" type="button">重新开始</button>
+            <div class="stat-box">
+                <span>剩余雷数</span>
+                <strong id="mineLeft">24</strong>
+            </div>
+            <div class="stat-box">
+                <span>用时</span>
+                <strong id="timer">0s</strong>
+            </div>
+        </section>
+
+        <section class="panel panel-status" aria-live="polite">
+            <p id="statusText">准备就绪，祝你好运。</p>
+        </section>
+
+        <section class="board-wrap" aria-label="扫雷棋盘">
+            <div id="board" class="board" role="grid"></div>
+        </section>
+    </main>
+
+    <script src="../scripts/site-shell.js" defer></script>
+    <script src="../scripts/game/minesweeper.js" defer></script>
+</body>
+
+</html>
