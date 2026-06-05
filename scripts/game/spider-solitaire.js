@@ -483,6 +483,9 @@ function renderBoard() {
             colEl.appendChild(cardEl);
         });
 
+        const cardH = readCssNumber("--card-h", 118);
+        colEl.style.minHeight = `${top + cardH}px`;
+
         boardEl.appendChild(colEl);
     });
 }
